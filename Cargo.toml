@@ -1,0 +1,14 @@
+[package]
+name = "system_tracing"
+version = "0.1.0"
+authors = ["hm <qq171928059@163.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+spin = "0.5"
+log = "0.4.14"
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+trapframe = { git = "https://github.com/rcore-os/trapframe-rs", rev = "bdfe5aa" }
+riscv_insn_decode = {git = "https://github.com/hm1229/riscv_insn_decode", rev = "0b954c9"}

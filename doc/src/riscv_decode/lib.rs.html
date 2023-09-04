@@ -1,0 +1,1307 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/hm/.cargo/registry/src/mirrors.ustc.edu.cn-61ef6e0cd06fb9b8/riscv-decode-0.2.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../riscv_decode/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<span id="2">  2</span>
+<span id="3">  3</span>
+<span id="4">  4</span>
+<span id="5">  5</span>
+<span id="6">  6</span>
+<span id="7">  7</span>
+<span id="8">  8</span>
+<span id="9">  9</span>
+<span id="10"> 10</span>
+<span id="11"> 11</span>
+<span id="12"> 12</span>
+<span id="13"> 13</span>
+<span id="14"> 14</span>
+<span id="15"> 15</span>
+<span id="16"> 16</span>
+<span id="17"> 17</span>
+<span id="18"> 18</span>
+<span id="19"> 19</span>
+<span id="20"> 20</span>
+<span id="21"> 21</span>
+<span id="22"> 22</span>
+<span id="23"> 23</span>
+<span id="24"> 24</span>
+<span id="25"> 25</span>
+<span id="26"> 26</span>
+<span id="27"> 27</span>
+<span id="28"> 28</span>
+<span id="29"> 29</span>
+<span id="30"> 30</span>
+<span id="31"> 31</span>
+<span id="32"> 32</span>
+<span id="33"> 33</span>
+<span id="34"> 34</span>
+<span id="35"> 35</span>
+<span id="36"> 36</span>
+<span id="37"> 37</span>
+<span id="38"> 38</span>
+<span id="39"> 39</span>
+<span id="40"> 40</span>
+<span id="41"> 41</span>
+<span id="42"> 42</span>
+<span id="43"> 43</span>
+<span id="44"> 44</span>
+<span id="45"> 45</span>
+<span id="46"> 46</span>
+<span id="47"> 47</span>
+<span id="48"> 48</span>
+<span id="49"> 49</span>
+<span id="50"> 50</span>
+<span id="51"> 51</span>
+<span id="52"> 52</span>
+<span id="53"> 53</span>
+<span id="54"> 54</span>
+<span id="55"> 55</span>
+<span id="56"> 56</span>
+<span id="57"> 57</span>
+<span id="58"> 58</span>
+<span id="59"> 59</span>
+<span id="60"> 60</span>
+<span id="61"> 61</span>
+<span id="62"> 62</span>
+<span id="63"> 63</span>
+<span id="64"> 64</span>
+<span id="65"> 65</span>
+<span id="66"> 66</span>
+<span id="67"> 67</span>
+<span id="68"> 68</span>
+<span id="69"> 69</span>
+<span id="70"> 70</span>
+<span id="71"> 71</span>
+<span id="72"> 72</span>
+<span id="73"> 73</span>
+<span id="74"> 74</span>
+<span id="75"> 75</span>
+<span id="76"> 76</span>
+<span id="77"> 77</span>
+<span id="78"> 78</span>
+<span id="79"> 79</span>
+<span id="80"> 80</span>
+<span id="81"> 81</span>
+<span id="82"> 82</span>
+<span id="83"> 83</span>
+<span id="84"> 84</span>
+<span id="85"> 85</span>
+<span id="86"> 86</span>
+<span id="87"> 87</span>
+<span id="88"> 88</span>
+<span id="89"> 89</span>
+<span id="90"> 90</span>
+<span id="91"> 91</span>
+<span id="92"> 92</span>
+<span id="93"> 93</span>
+<span id="94"> 94</span>
+<span id="95"> 95</span>
+<span id="96"> 96</span>
+<span id="97"> 97</span>
+<span id="98"> 98</span>
+<span id="99"> 99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+</pre><div class="example-wrap"><pre class="rust ">
+<span class="attribute">#![<span class="ident">no_std</span>]</span>
+
+<span class="kw">mod</span> <span class="ident">compressed</span>;
+<span class="kw">mod</span> <span class="ident">instruction</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">types</span>;
+
+<span class="kw">use</span> <span class="ident">types</span>::<span class="kw-2">*</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">instruction</span>::<span class="ident">Instruction</span>;
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">DecodingError</span> {
+    <span class="doccomment">/// Instruction&#39;s opcode is reserved for custom extentions and thus can&#39;t be decoded further.</span>
+    <span class="ident">Custom</span>,
+    <span class="doccomment">/// Instruction&#39;s opcode is reserved for future standard extentions.</span>
+    <span class="ident">Reserved</span>,
+    <span class="doccomment">/// Instruction bit pattern not defined in current specification.</span>
+    <span class="ident">Unknown</span>,
+    <span class="doccomment">/// More bits from the instruction are required to fully decode it.</span>
+    <span class="ident">Truncated</span>,
+    <span class="doccomment">/// Instruction type is well defined but is part of some extension this library doesn&#39;t support</span>
+    <span class="doccomment">/// decoding yet.</span>
+    <span class="ident">Unimplemented</span>,
+}
+
+<span class="kw">type</span> <span class="ident">DecodingResult</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instruction</span>, <span class="ident">DecodingError</span><span class="op">&gt;</span>;
+
+<span class="doccomment">/// Return the length (in bytes) of an instruction given the low 16 bits of it.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The current spec reserves a bit pattern for instructions of length &gt;= 192 bits, but for</span>
+<span class="doccomment">/// simplicity this function just returns 24 in that case. The largest instructions currently</span>
+<span class="doccomment">/// defined are 4 bytes so it will likely be a long time until this diffence matters.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">instruction_length</span>(<span class="ident">i</span>: <span class="ident">u16</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
+    <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0b11</span> <span class="op">!=</span> <span class="number">0b11</span> {
+        <span class="number">2</span>
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0b11100</span> <span class="op">!=</span> <span class="number">0b11100</span> {
+        <span class="number">4</span>
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0b111111</span> <span class="op">==</span> <span class="number">0b011111</span> {
+        <span class="number">6</span>
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0b1111111</span> <span class="op">==</span> <span class="number">0b011111</span> {
+        <span class="number">8</span>
+    } <span class="kw">else</span> {
+        <span class="number">10</span> <span class="op">+</span> <span class="number">2</span> <span class="op">*</span> ((<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span>) <span class="kw">as</span> <span class="ident">usize</span>
+    }
+}
+
+<span class="doccomment">/// Decode the given instruction.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">decode</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0b11</span> {
+        <span class="number">0b00</span> <span class="op">=&gt;</span> <span class="ident">compressed</span>::<span class="ident">decode_q00</span>(<span class="ident">i</span>),
+        <span class="number">0b01</span> <span class="op">=&gt;</span> <span class="ident">compressed</span>::<span class="ident">decode_q01</span>(<span class="ident">i</span>),
+        <span class="number">0b10</span> <span class="op">=&gt;</span> <span class="ident">compressed</span>::<span class="ident">decode_q10</span>(<span class="ident">i</span>),
+        <span class="number">0b11</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">2</span>) <span class="op">&amp;</span> <span class="number">0b11111</span> {
+            <span class="number">0b00000</span> <span class="op">=&gt;</span> <span class="ident">decode_load</span>(<span class="ident">i</span>),
+            <span class="number">0b00001</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+                <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Flw</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b00010</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Custom</span>),
+            <span class="number">0b00011</span> <span class="op">=&gt;</span> <span class="ident">decode_misc_mem</span>(<span class="ident">i</span>),
+            <span class="number">0b00100</span> <span class="op">=&gt;</span> <span class="ident">decode_op_imm</span>(<span class="ident">i</span>),
+            <span class="number">0b00101</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Auipc</span>(<span class="ident">UType</span>(<span class="ident">i</span>))),
+            <span class="number">0b00110</span> <span class="op">=&gt;</span> <span class="ident">decode_op_imm32</span>(<span class="ident">i</span>),
+            <span class="number">0b00111</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>), <span class="comment">// 48bit instruction</span>
+
+            <span class="number">0b01000</span> <span class="op">=&gt;</span> <span class="ident">decode_store</span>(<span class="ident">i</span>),
+            <span class="number">0b01001</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+                <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsw</span>(<span class="ident">SType</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b01010</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Custom</span>),
+            <span class="number">0b01011</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unimplemented</span>), <span class="comment">// AMO</span>
+            <span class="number">0b01100</span> <span class="op">=&gt;</span> <span class="ident">decode_op</span>(<span class="ident">i</span>),
+            <span class="number">0b01101</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lui</span>(<span class="ident">UType</span>(<span class="ident">i</span>))),
+            <span class="number">0b01110</span> <span class="op">=&gt;</span> <span class="ident">decode_op32</span>(<span class="ident">i</span>),
+            <span class="number">0b01111</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>), <span class="comment">// 64bit instruction</span>
+
+            <span class="number">0b10000</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>) <span class="op">&amp;</span> <span class="number">0b11</span> {
+                <span class="number">0b00</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmadds</span>(<span class="ident">R4Type</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b10001</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>) <span class="op">&amp;</span> <span class="number">0b11</span> {
+                <span class="number">0b00</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmsubs</span>(<span class="ident">R4Type</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b10010</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>) <span class="op">&amp;</span> <span class="number">0b11</span> {
+                <span class="number">0b00</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fnmsubs</span>(<span class="ident">R4Type</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b10011</span> <span class="op">=&gt;</span> <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>) <span class="op">&amp;</span> <span class="number">0b11</span> {
+                <span class="number">0b00</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fnmadds</span>(<span class="ident">R4Type</span>(<span class="ident">i</span>))),
+                <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+            },
+            <span class="number">0b10100</span> <span class="op">=&gt;</span> <span class="ident">decode_opfp</span>(<span class="ident">i</span>), <span class="comment">// OP-FP</span>
+            <span class="number">0b10101</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>),
+            <span class="number">0b10110</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Custom</span>),
+            <span class="number">0b10111</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>), <span class="comment">// 48bit instruction</span>
+
+            <span class="number">0b11000</span> <span class="op">=&gt;</span> <span class="ident">decode_branch</span>(<span class="ident">i</span>),
+            <span class="number">0b11001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Jalr</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+            <span class="number">0b11010</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>),
+            <span class="number">0b11011</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Jal</span>(<span class="ident">JType</span>(<span class="ident">i</span>))),
+            <span class="number">0b11100</span> <span class="op">=&gt;</span> <span class="ident">decode_system</span>(<span class="ident">i</span>),
+            <span class="number">0b11101</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>),
+            <span class="number">0b11110</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Custom</span>),
+            <span class="number">0b11111</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>), <span class="comment">// &gt;= 80bit instruction</span>
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>(),
+        },
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>(),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_opfp</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Instruction</span>, <span class="ident">DecodingError</span><span class="op">&gt;</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>) <span class="op">&amp;</span> <span class="number">0b1111111</span> {
+        <span class="number">0b0000000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fadds</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b0000100</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsubs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b0001000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmuls</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b0001100</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fdivs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b0101100</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsqrts</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b0010000</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> {
+            <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsgnjs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsgnjns</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fsgnjxs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b0010100</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> {
+            <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmins</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmaxs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b1100000</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> {
+            <span class="number">0b00000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fcvtws</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b00001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fcvtwus</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b1110000</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmvxw</span>(<span class="ident">RType</span>(<span class="ident">i</span>)))
+        }
+        <span class="number">0b1010000</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> {
+            <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Feqs</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Flts</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fles</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b1110000</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> <span class="op">==</span> <span class="number">0b001</span> <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fclasss</span>(<span class="ident">RType</span>(<span class="ident">i</span>)))
+        }
+        <span class="number">0b1101000</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fcvtsw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b1101000</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">1</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fcvtswu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="number">0b1111000</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">20</span> <span class="op">&amp;</span> <span class="number">0b11111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span> <span class="op">&amp;</span> <span class="number">0b111</span> <span class="op">==</span> <span class="number">0</span> <span class="op">=&gt;</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fmvwx</span>(<span class="ident">RType</span>(<span class="ident">i</span>)))
+        }
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_load</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+        <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lb</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lh</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lw</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b011</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Ld</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b100</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lbu</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b101</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lhu</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b110</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Lwu</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b111</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>(),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_misc_mem</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">if</span> <span class="ident">i</span> <span class="op">==</span> <span class="number">0b001000000001111</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">FenceI</span>)
+    } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="number">0xf00fff80</span> <span class="op">==</span> <span class="number">0</span> {
+        <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Fence</span>(<span class="ident">FenceType</span>(<span class="ident">i</span>)))
+    } <span class="kw">else</span> {
+        <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Reserved</span>)
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_op_imm</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+        <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Addi</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">26</span> {
+            <span class="number">0</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Slli</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Slti</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b011</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sltiu</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b100</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Xori</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b101</span> <span class="op">=&gt;</span> <span class="kw">match</span> <span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">26</span> {
+            <span class="number">0b000000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Srli</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+            <span class="number">0b010000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Srai</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+            <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        },
+        <span class="number">0b110</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Ori</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="number">0b111</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Andi</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>(),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_op_imm32</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>, (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span>) {
+        (<span class="kw">_</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Addiw</span>(<span class="ident">IType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b001</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Slliw</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Srliw</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0100000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sraiw</span>(<span class="ident">ShiftType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_store</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+        <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sb</span>(<span class="ident">SType</span>(<span class="ident">i</span>))),
+        <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sh</span>(<span class="ident">SType</span>(<span class="ident">i</span>))),
+        <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sw</span>(<span class="ident">SType</span>(<span class="ident">i</span>))),
+        <span class="number">0b011</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sd</span>(<span class="ident">SType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_op</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>, (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span>) {
+        (<span class="number">0b0000000</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Add</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0100000</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sub</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b001</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sll</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b010</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Slt</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b011</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sltu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b100</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Xor</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Srl</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0100000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sra</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b110</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Or</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b111</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">And</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+
+        (<span class="number">0b0000001</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mul</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b001</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mulh</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b010</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mulhsu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b011</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mulhu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b100</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Div</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Divu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b110</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Rem</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b111</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Remu</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_op32</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">25</span>, (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span>) {
+        (<span class="number">0b0000000</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Addw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0100000</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Subw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b001</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sllw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Srlw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0100000</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sraw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+
+        (<span class="number">0b0000001</span>, <span class="number">0b000</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mulw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b100</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Divw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b101</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Divuw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b110</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Remw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        (<span class="number">0b0000001</span>, <span class="number">0b111</span>) <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Remuw</span>(<span class="ident">RType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_branch</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+        <span class="number">0b000</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Beq</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Bne</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        <span class="number">0b011</span> <span class="op">=&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>),
+        <span class="number">0b100</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Blt</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="number">0b101</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Bge</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="number">0b110</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Bltu</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="number">0b111</span> <span class="op">=&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Bgeu</span>(<span class="ident">BType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> <span class="macro">unreachable</span><span class="macro">!</span>(),
+    }
+}
+
+<span class="kw">fn</span> <span class="ident">decode_system</span>(<span class="ident">i</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">DecodingResult</span> {
+    <span class="kw">match</span> <span class="ident">i</span> {
+        <span class="comment">// Environment Call and Breakpoint</span>
+        <span class="number">0b000000000000_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Ecall</span>),
+        <span class="number">0b000000000001_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Ebreak</span>),
+        <span class="comment">// Trap-Return Instructions</span>
+        <span class="number">0b0000000_00010_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Uret</span>),
+        <span class="number">0b0001000_00010_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Sret</span>),
+        <span class="number">0b0011000_00010_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Mret</span>),
+        <span class="comment">// Interrupt-Management Instructions</span>
+        <span class="number">0b0001000_00101_00000_000_00000_1110011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Wfi</span>),
+        <span class="kw">_</span> <span class="op">=&gt;</span> {}
+    }
+
+    <span class="kw">match</span> (<span class="ident">i</span> <span class="op">&gt;&gt;</span> <span class="number">12</span>) <span class="op">&amp;</span> <span class="number">0b111</span> {
+        <span class="number">0b001</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrw</span>(<span class="ident">CsrType</span>(<span class="ident">i</span>))),
+        <span class="number">0b010</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrs</span>(<span class="ident">CsrType</span>(<span class="ident">i</span>))),
+        <span class="number">0b011</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrc</span>(<span class="ident">CsrType</span>(<span class="ident">i</span>))),
+        <span class="number">0b101</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrwi</span>(<span class="ident">CsrIType</span>(<span class="ident">i</span>))),
+        <span class="number">0b110</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrsi</span>(<span class="ident">CsrIType</span>(<span class="ident">i</span>))),
+        <span class="number">0b111</span> <span class="op">=&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">Csrrci</span>(<span class="ident">CsrIType</span>(<span class="ident">i</span>))),
+        <span class="kw">_</span> <span class="op">=&gt;</span> {}
+    }
+
+    <span class="comment">// Memory-Management Instructions</span>
+    <span class="kw">const</span> <span class="ident">SFENCE_VMA_MASK</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0b1111111_00000_00000_111_11111_1111111</span>;
+    <span class="kw">const</span> <span class="ident">SFENCE_VMA_VALUE</span>: <span class="ident">u32</span> <span class="op">=</span> <span class="number">0b0001001_00000_00000_000_00000_1110011</span>;
+    <span class="kw">if</span> <span class="ident">i</span> <span class="op">&amp;</span> <span class="ident">SFENCE_VMA_MASK</span> <span class="op">==</span> <span class="ident">SFENCE_VMA_VALUE</span> {
+        <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">Instruction</span>::<span class="ident">SfenceVma</span>(<span class="ident">RType</span>(<span class="ident">i</span>)));
+    }
+
+    <span class="prelude-val">Err</span>(<span class="ident">DecodingError</span>::<span class="ident">Unknown</span>)
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">tests</span> {
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="ident">Instruction</span>::<span class="kw-2">*</span>;
+
+    <span class="comment">// Nearly all tests are derived from the output of</span>
+    <span class="comment">// [riscv-tests](https://github.com/riscv/riscv-tests)</span>
+    <span class="comment">//</span>
+    <span class="comment">// Examples of individual instructions were extracted with a simple bash command (see below),</span>
+    <span class="comment">// and then post-processed with emacs macros.</span>
+    <span class="comment">//</span>
+    <span class="comment">// $ rg &quot;\tbne\t&quot; | sort -R | tail -n 3 | xclip -selection c</span>
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">decoding</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00001a37</span>).<span class="ident">unwrap</span>(), <span class="ident">Lui</span>(<span class="ident">UType</span>(<span class="number">0x00001a37</span>))); <span class="comment">// lui x20,0x1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x800002b7</span>).<span class="ident">unwrap</span>(), <span class="ident">Lui</span>(<span class="ident">UType</span>(<span class="number">0x800002b7</span>))); <span class="comment">// lui x5,0x80000</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x212120b7</span>).<span class="ident">unwrap</span>(), <span class="ident">Lui</span>(<span class="ident">UType</span>(<span class="number">0x212120b7</span>))); <span class="comment">// lui x1,0x21212</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xffffe517</span>).<span class="ident">unwrap</span>(), <span class="ident">Auipc</span>(<span class="ident">UType</span>(<span class="number">0xffffe517</span>))); <span class="comment">// auipc x10,0xffffe</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfffff797</span>).<span class="ident">unwrap</span>(), <span class="ident">Auipc</span>(<span class="ident">UType</span>(<span class="number">0xfffff797</span>))); <span class="comment">// auipc x15,0xfffff</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfffff797</span>).<span class="ident">unwrap</span>(), <span class="ident">Auipc</span>(<span class="ident">UType</span>(<span class="number">0xfffff797</span>))); <span class="comment">// auipc x15,0xfffff</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfe1ff06f</span>).<span class="ident">unwrap</span>(), <span class="ident">Jal</span>(<span class="ident">JType</span>(<span class="number">0xfe1ff06f</span>))); <span class="comment">// jal x0,800029ec</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0000006f</span>).<span class="ident">unwrap</span>(), <span class="ident">Jal</span>(<span class="ident">JType</span>(<span class="number">0x0000006f</span>))); <span class="comment">// jal x0,80002258</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xf89ff06f</span>).<span class="ident">unwrap</span>(), <span class="ident">Jal</span>(<span class="ident">JType</span>(<span class="number">0xf89ff06f</span>))); <span class="comment">// jal x0,800027ac</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00008067</span>).<span class="ident">unwrap</span>(), <span class="ident">Jalr</span>(<span class="ident">IType</span>(<span class="number">0x00008067</span>))); <span class="comment">// jalr x0,0(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00008067</span>).<span class="ident">unwrap</span>(), <span class="ident">Jalr</span>(<span class="ident">IType</span>(<span class="number">0x00008067</span>))); <span class="comment">// jalr x0,0(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x000f0067</span>).<span class="ident">unwrap</span>(), <span class="ident">Jalr</span>(<span class="ident">IType</span>(<span class="number">0x000f0067</span>))); <span class="comment">// jalr x0,0(x30)</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">load</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02008283</span>).<span class="ident">unwrap</span>(), <span class="ident">Lb</span>(<span class="ident">IType</span>(<span class="number">0x02008283</span>))); <span class="comment">// lb x5,32(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00708283</span>).<span class="ident">unwrap</span>(), <span class="ident">Lb</span>(<span class="ident">IType</span>(<span class="number">0x00708283</span>))); <span class="comment">// lb x5,7(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00108f03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lb</span>(<span class="ident">IType</span>(<span class="number">0x00108f03</span>))); <span class="comment">// lb x30,1(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00411f03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lh</span>(<span class="ident">IType</span>(<span class="number">0x00411f03</span>))); <span class="comment">// Lh x30,4(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00611f03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lh</span>(<span class="ident">IType</span>(<span class="number">0x00611f03</span>))); <span class="comment">// Lh x30,6(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00811f03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lh</span>(<span class="ident">IType</span>(<span class="number">0x00811f03</span>))); <span class="comment">// Lh x30,8(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02052403</span>).<span class="ident">unwrap</span>(), <span class="ident">Lw</span>(<span class="ident">IType</span>(<span class="number">0x02052403</span>))); <span class="comment">// Lw x8,32(x10)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x03452683</span>).<span class="ident">unwrap</span>(), <span class="ident">Lw</span>(<span class="ident">IType</span>(<span class="number">0x03452683</span>))); <span class="comment">// Lw x13,52(x10)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0006a703</span>).<span class="ident">unwrap</span>(), <span class="ident">Lw</span>(<span class="ident">IType</span>(<span class="number">0x0006a703</span>))); <span class="comment">// Lw x14,0(x13)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0006c783</span>).<span class="ident">unwrap</span>(), <span class="ident">Lbu</span>(<span class="ident">IType</span>(<span class="number">0x0006c783</span>))); <span class="comment">// Lbu x15,0(x13)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0006c703</span>).<span class="ident">unwrap</span>(), <span class="ident">Lbu</span>(<span class="ident">IType</span>(<span class="number">0x0006c703</span>))); <span class="comment">// Lbu x14,0(x13)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0007c683</span>).<span class="ident">unwrap</span>(), <span class="ident">Lbu</span>(<span class="ident">IType</span>(<span class="number">0x0007c683</span>))); <span class="comment">// Lbu x13,0(x15)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0060df03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lhu</span>(<span class="ident">IType</span>(<span class="number">0x0060df03</span>))); <span class="comment">// Lhu x30,6(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xffe0df03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lhu</span>(<span class="ident">IType</span>(<span class="number">0xffe0df03</span>))); <span class="comment">// Lhu x30,-2(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0002d303</span>).<span class="ident">unwrap</span>(), <span class="ident">Lhu</span>(<span class="ident">IType</span>(<span class="number">0x0002d303</span>))); <span class="comment">// Lhu x6,0(x5)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00346303</span>).<span class="ident">unwrap</span>(), <span class="ident">Lwu</span>(<span class="ident">IType</span>(<span class="number">0x00346303</span>))); <span class="comment">// Lwu x6,3(x8)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0080ef03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lwu</span>(<span class="ident">IType</span>(<span class="number">0x0080ef03</span>))); <span class="comment">// Lwu x30,8(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0000ef03</span>).<span class="ident">unwrap</span>(), <span class="ident">Lwu</span>(<span class="ident">IType</span>(<span class="number">0x0000ef03</span>))); <span class="comment">// Lwu x30,0(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01853683</span>).<span class="ident">unwrap</span>(), <span class="ident">Ld</span>(<span class="ident">IType</span>(<span class="number">0x01853683</span>))); <span class="comment">// Ld x13,24(x10)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02013c03</span>).<span class="ident">unwrap</span>(), <span class="ident">Ld</span>(<span class="ident">IType</span>(<span class="number">0x02013c03</span>))); <span class="comment">// Ld x24,32(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0007b703</span>).<span class="ident">unwrap</span>(), <span class="ident">Ld</span>(<span class="ident">IType</span>(<span class="number">0x0007b703</span>))); <span class="comment">// Ld x14,0(x15)</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">misc_mem</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0310000f</span>).<span class="ident">unwrap</span>(), <span class="ident">Fence</span>(<span class="ident">FenceType</span>(<span class="number">0x0310000f</span>))); <span class="comment">// fence rw,w</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0820000f</span>).<span class="ident">unwrap</span>(), <span class="ident">Fence</span>(<span class="ident">FenceType</span>(<span class="number">0x0820000f</span>))); <span class="comment">// fence i,r</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0ff0000f</span>).<span class="ident">unwrap</span>(), <span class="ident">Fence</span>(<span class="ident">FenceType</span>(<span class="number">0x0ff0000f</span>))); <span class="comment">// fence iorw,iorw</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0000100f</span>).<span class="ident">unwrap</span>(), <span class="ident">FenceI</span>); <span class="comment">// fence.i</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">op_imm</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00200793</span>).<span class="ident">unwrap</span>(), <span class="ident">Addi</span>(<span class="ident">IType</span>(<span class="number">0x00200793</span>))); <span class="comment">// addi x15,x0,2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00000013</span>).<span class="ident">unwrap</span>(), <span class="ident">Addi</span>(<span class="ident">IType</span>(<span class="number">0x00000013</span>))); <span class="comment">// addi x0,x0,0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00000013</span>).<span class="ident">unwrap</span>(), <span class="ident">Addi</span>(<span class="ident">IType</span>(<span class="number">0x00000013</span>))); <span class="comment">// addi x0,x0,0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00381813</span>).<span class="ident">unwrap</span>(), <span class="ident">Slli</span>(<span class="ident">ShiftType</span>(<span class="number">0x00381813</span>))); <span class="comment">// slli x16,x16,0x3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01059793</span>).<span class="ident">unwrap</span>(), <span class="ident">Slli</span>(<span class="ident">ShiftType</span>(<span class="number">0x01059793</span>))); <span class="comment">// slli x15,x11,0x10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x03079793</span>).<span class="ident">unwrap</span>(), <span class="ident">Slli</span>(<span class="ident">ShiftType</span>(<span class="number">0x03079793</span>))); <span class="comment">// slli x15,x15,0x30</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0010af13</span>).<span class="ident">unwrap</span>(), <span class="ident">Slti</span>(<span class="ident">IType</span>(<span class="number">0x0010af13</span>))); <span class="comment">// slti x30,x1,1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x7ff0af13</span>).<span class="ident">unwrap</span>(), <span class="ident">Slti</span>(<span class="ident">IType</span>(<span class="number">0x7ff0af13</span>))); <span class="comment">// slti x30,x1,2047</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x8000af13</span>).<span class="ident">unwrap</span>(), <span class="ident">Slti</span>(<span class="ident">IType</span>(<span class="number">0x8000af13</span>))); <span class="comment">// slti x30,x1,-2048</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0017b613</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltiu</span>(<span class="ident">IType</span>(<span class="number">0x0017b613</span>))); <span class="comment">// sltiu x12,x15,1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfff0bf13</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltiu</span>(<span class="ident">IType</span>(<span class="number">0xfff0bf13</span>))); <span class="comment">// sltiu x30,x1,-1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0017b613</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltiu</span>(<span class="ident">IType</span>(<span class="number">0x0017b613</span>))); <span class="comment">// sltiu x12,x15,1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfff6c693</span>).<span class="ident">unwrap</span>(), <span class="ident">Xori</span>(<span class="ident">IType</span>(<span class="number">0xfff6c693</span>))); <span class="comment">// xori x13,x13,-1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x999ac093</span>).<span class="ident">unwrap</span>(), <span class="ident">Xori</span>(<span class="ident">IType</span>(<span class="number">0x999ac093</span>))); <span class="comment">// xori x1,x21,-1639</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfff6c693</span>).<span class="ident">unwrap</span>(), <span class="ident">Xori</span>(<span class="ident">IType</span>(<span class="number">0xfff6c693</span>))); <span class="comment">// xori x13,x13,-1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c7d793</span>).<span class="ident">unwrap</span>(), <span class="ident">Srli</span>(<span class="ident">ShiftType</span>(<span class="number">0x00c7d793</span>))); <span class="comment">// srli x15,x15,0xc</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0207d793</span>).<span class="ident">unwrap</span>(), <span class="ident">Srli</span>(<span class="ident">ShiftType</span>(<span class="number">0x0207d793</span>))); <span class="comment">// srli x15,x15,0x20</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c7d793</span>).<span class="ident">unwrap</span>(), <span class="ident">Srli</span>(<span class="ident">ShiftType</span>(<span class="number">0x00c7d793</span>))); <span class="comment">// srli x15,x15,0xc</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e0df13</span>).<span class="ident">unwrap</span>(), <span class="ident">Srai</span>(<span class="ident">ShiftType</span>(<span class="number">0x40e0df13</span>))); <span class="comment">// srai x30,x1,0xe</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x41f55893</span>).<span class="ident">unwrap</span>(), <span class="ident">Srai</span>(<span class="ident">ShiftType</span>(<span class="number">0x41f55893</span>))); <span class="comment">// srai x17,x10,0x1f</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e0df13</span>).<span class="ident">unwrap</span>(), <span class="ident">Srai</span>(<span class="ident">ShiftType</span>(<span class="number">0x40e0df13</span>))); <span class="comment">// srai x30,x1,0xe</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00156513</span>).<span class="ident">unwrap</span>(), <span class="ident">Ori</span>(<span class="ident">IType</span>(<span class="number">0x00156513</span>))); <span class="comment">// ori x10,x10,1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x04076713</span>).<span class="ident">unwrap</span>(), <span class="ident">Ori</span>(<span class="ident">IType</span>(<span class="number">0x04076713</span>))); <span class="comment">// ori x14,x14,64</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x5391e193</span>).<span class="ident">unwrap</span>(), <span class="ident">Ori</span>(<span class="ident">IType</span>(<span class="number">0x5391e193</span>))); <span class="comment">// ori x3,x3,1337</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xff867693</span>).<span class="ident">unwrap</span>(), <span class="ident">Andi</span>(<span class="ident">IType</span>(<span class="number">0xff867693</span>))); <span class="comment">// andi x13,x12,-8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x08077693</span>).<span class="ident">unwrap</span>(), <span class="ident">Andi</span>(<span class="ident">IType</span>(<span class="number">0x08077693</span>))); <span class="comment">// andi x13,x14,128</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x04077693</span>).<span class="ident">unwrap</span>(), <span class="ident">Andi</span>(<span class="ident">IType</span>(<span class="number">0x04077693</span>))); <span class="comment">// andi x13,x14,64</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">op_imm32</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0010009b</span>).<span class="ident">unwrap</span>(), <span class="ident">Addiw</span>(<span class="ident">IType</span>(<span class="number">0x0010009b</span>))); <span class="comment">// addiw x1,x0,1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfff0809b</span>).<span class="ident">unwrap</span>(), <span class="ident">Addiw</span>(<span class="ident">IType</span>(<span class="number">0xfff0809b</span>))); <span class="comment">// addiw x1,x1,-1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfff0809b</span>).<span class="ident">unwrap</span>(), <span class="ident">Addiw</span>(<span class="ident">IType</span>(<span class="number">0xfff0809b</span>))); <span class="comment">// addiw x1,x1,-1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0057979b</span>).<span class="ident">unwrap</span>(), <span class="ident">Slliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x0057979b</span>))); <span class="comment">// slliw x15,x15,0x5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0057979b</span>).<span class="ident">unwrap</span>(), <span class="ident">Slliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x0057979b</span>))); <span class="comment">// slliw x15,x15,0x5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00e09f1b</span>).<span class="ident">unwrap</span>(), <span class="ident">Slliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x00e09f1b</span>))); <span class="comment">// slliw x30,x1,0xe</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0017d61b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x0017d61b</span>))); <span class="comment">// srliw x12,x15,0x1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01f0df1b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x01f0df1b</span>))); <span class="comment">// srliw x30,x1,0x1f</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0017d61b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srliw</span>(<span class="ident">ShiftType</span>(<span class="number">0x0017d61b</span>))); <span class="comment">// srliw x12,x15,0x1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x41f0df1b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraiw</span>(<span class="ident">ShiftType</span>(<span class="number">0x41f0df1b</span>))); <span class="comment">// sraiw x30,x1,0x1f</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4000df1b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraiw</span>(<span class="ident">ShiftType</span>(<span class="number">0x4000df1b</span>))); <span class="comment">// sraiw x30,x1,0x0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4070d09b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraiw</span>(<span class="ident">ShiftType</span>(<span class="number">0x4070d09b</span>))); <span class="comment">// sraiw x1,x1,0x7</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">store</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00e78023</span>).<span class="ident">unwrap</span>(), <span class="ident">Sb</span>(<span class="ident">SType</span>(<span class="number">0x00e78023</span>))); <span class="comment">// sb x14,0(x15)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x001101a3</span>).<span class="ident">unwrap</span>(), <span class="ident">Sb</span>(<span class="ident">SType</span>(<span class="number">0x001101a3</span>))); <span class="comment">// sb x1,3(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfee78fa3</span>).<span class="ident">unwrap</span>(), <span class="ident">Sb</span>(<span class="ident">SType</span>(<span class="number">0xfee78fa3</span>))); <span class="comment">// sb x14,-1(x15)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfe209d23</span>).<span class="ident">unwrap</span>(), <span class="ident">Sh</span>(<span class="ident">SType</span>(<span class="number">0xfe209d23</span>))); <span class="comment">// sh x2,-6(x1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00111223</span>).<span class="ident">unwrap</span>(), <span class="ident">Sh</span>(<span class="ident">SType</span>(<span class="number">0x00111223</span>))); <span class="comment">// sh x1,4(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00111523</span>).<span class="ident">unwrap</span>(), <span class="ident">Sh</span>(<span class="ident">SType</span>(<span class="number">0x00111523</span>))); <span class="comment">// sh x1,10(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x05612c23</span>).<span class="ident">unwrap</span>(), <span class="ident">Sw</span>(<span class="ident">SType</span>(<span class="number">0x05612c23</span>))); <span class="comment">// sw x22,88(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01b12e23</span>).<span class="ident">unwrap</span>(), <span class="ident">Sw</span>(<span class="ident">SType</span>(<span class="number">0x01b12e23</span>))); <span class="comment">// sw x27,28(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01052223</span>).<span class="ident">unwrap</span>(), <span class="ident">Sw</span>(<span class="ident">SType</span>(<span class="number">0x01052223</span>))); <span class="comment">// sw x16,4(x10)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0b613823</span>).<span class="ident">unwrap</span>(), <span class="ident">Sd</span>(<span class="ident">SType</span>(<span class="number">0x0b613823</span>))); <span class="comment">// sd x22,176(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x09213823</span>).<span class="ident">unwrap</span>(), <span class="ident">Sd</span>(<span class="ident">SType</span>(<span class="number">0x09213823</span>))); <span class="comment">// sd x18,144(x2)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f6b423</span>).<span class="ident">unwrap</span>(), <span class="ident">Sd</span>(<span class="ident">SType</span>(<span class="number">0x00f6b423</span>))); <span class="comment">// sd x15,8(x13)</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">op</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c58633</span>).<span class="ident">unwrap</span>(), <span class="ident">Add</span>(<span class="ident">RType</span>(<span class="number">0x00c58633</span>))); <span class="comment">// add x12,x11,x12</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00d506b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Add</span>(<span class="ident">RType</span>(<span class="number">0x00d506b3</span>))); <span class="comment">// add x13,x10,x13</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00a70533</span>).<span class="ident">unwrap</span>(), <span class="ident">Add</span>(<span class="ident">RType</span>(<span class="number">0x00a70533</span>))); <span class="comment">// add x10,x14,x10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40b50533</span>).<span class="ident">unwrap</span>(), <span class="ident">Sub</span>(<span class="ident">RType</span>(<span class="number">0x40b50533</span>))); <span class="comment">// sub x10,x10,x11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e78533</span>).<span class="ident">unwrap</span>(), <span class="ident">Sub</span>(<span class="ident">RType</span>(<span class="number">0x40e78533</span>))); <span class="comment">// sub x10,x15,x14</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x41060633</span>).<span class="ident">unwrap</span>(), <span class="ident">Sub</span>(<span class="ident">RType</span>(<span class="number">0x41060633</span>))); <span class="comment">// sub x12,x12,x16</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00209f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sll</span>(<span class="ident">RType</span>(<span class="number">0x00209f33</span>))); <span class="comment">// sll x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00209f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sll</span>(<span class="ident">RType</span>(<span class="number">0x00209f33</span>))); <span class="comment">// sll x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00209f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sll</span>(<span class="ident">RType</span>(<span class="number">0x00209f33</span>))); <span class="comment">// sll x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020af33</span>).<span class="ident">unwrap</span>(), <span class="ident">Slt</span>(<span class="ident">RType</span>(<span class="number">0x0020af33</span>))); <span class="comment">// slt x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020af33</span>).<span class="ident">unwrap</span>(), <span class="ident">Slt</span>(<span class="ident">RType</span>(<span class="number">0x0020af33</span>))); <span class="comment">// slt x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020af33</span>).<span class="ident">unwrap</span>(), <span class="ident">Slt</span>(<span class="ident">RType</span>(<span class="number">0x0020af33</span>))); <span class="comment">// slt x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020bf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltu</span>(<span class="ident">RType</span>(<span class="number">0x0020bf33</span>))); <span class="comment">// sltu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020bf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltu</span>(<span class="ident">RType</span>(<span class="number">0x0020bf33</span>))); <span class="comment">// sltu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x000030b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Sltu</span>(<span class="ident">RType</span>(<span class="number">0x000030b3</span>))); <span class="comment">// sltu x1,x0,x0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f647b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Xor</span>(<span class="ident">RType</span>(<span class="number">0x00f647b3</span>))); <span class="comment">// xor x15,x12,x15</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020cf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Xor</span>(<span class="ident">RType</span>(<span class="number">0x0020cf33</span>))); <span class="comment">// xor x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020c133</span>).<span class="ident">unwrap</span>(), <span class="ident">Xor</span>(<span class="ident">RType</span>(<span class="number">0x0020c133</span>))); <span class="comment">// xor x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020d0b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Srl</span>(<span class="ident">RType</span>(<span class="number">0x0020d0b3</span>))); <span class="comment">// srl x1,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Srl</span>(<span class="ident">RType</span>(<span class="number">0x0020df33</span>))); <span class="comment">// srl x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Srl</span>(<span class="ident">RType</span>(<span class="number">0x0020df33</span>))); <span class="comment">// srl x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4020df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Sra</span>(<span class="ident">RType</span>(<span class="number">0x4020df33</span>))); <span class="comment">// sra x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x400050b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Sra</span>(<span class="ident">RType</span>(<span class="number">0x400050b3</span>))); <span class="comment">// sra x1,x0,x0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4020d133</span>).<span class="ident">unwrap</span>(), <span class="ident">Sra</span>(<span class="ident">RType</span>(<span class="number">0x4020d133</span>))); <span class="comment">// sra x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00b7e5b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Or</span>(<span class="ident">RType</span>(<span class="number">0x00b7e5b3</span>))); <span class="comment">// or x11,x15,x11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f665b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Or</span>(<span class="ident">RType</span>(<span class="number">0x00f665b3</span>))); <span class="comment">// or x11,x12,x15</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00b7e7b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Or</span>(<span class="ident">RType</span>(<span class="number">0x00b7e7b3</span>))); <span class="comment">// or x15,x15,x11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00d57533</span>).<span class="ident">unwrap</span>(), <span class="ident">And</span>(<span class="ident">RType</span>(<span class="number">0x00d57533</span>))); <span class="comment">// and x10,x10,x13</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00b7f733</span>).<span class="ident">unwrap</span>(), <span class="ident">And</span>(<span class="ident">RType</span>(<span class="number">0x00b7f733</span>))); <span class="comment">// and x14,x15,x11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c7f733</span>).<span class="ident">unwrap</span>(), <span class="ident">And</span>(<span class="ident">RType</span>(<span class="number">0x00c7f733</span>))); <span class="comment">// and x14,x15,x12</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x021080b3</span>).<span class="ident">unwrap</span>(), <span class="ident">Mul</span>(<span class="ident">RType</span>(<span class="number">0x021080b3</span>))); <span class="comment">// mul x1,x1,x1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02208f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mul</span>(<span class="ident">RType</span>(<span class="number">0x02208f33</span>))); <span class="comment">// mul x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02208133</span>).<span class="ident">unwrap</span>(), <span class="ident">Mul</span>(<span class="ident">RType</span>(<span class="number">0x02208133</span>))); <span class="comment">// mul x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02209133</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulh</span>(<span class="ident">RType</span>(<span class="number">0x02209133</span>))); <span class="comment">// mulh x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02209f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulh</span>(<span class="ident">RType</span>(<span class="number">0x02209f33</span>))); <span class="comment">// mulh x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02209f33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulh</span>(<span class="ident">RType</span>(<span class="number">0x02209f33</span>))); <span class="comment">// mulh x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220a133</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhsu</span>(<span class="ident">RType</span>(<span class="number">0x0220a133</span>))); <span class="comment">// mulhsu x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220af33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhsu</span>(<span class="ident">RType</span>(<span class="number">0x0220af33</span>))); <span class="comment">// mulhsu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220af33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhsu</span>(<span class="ident">RType</span>(<span class="number">0x0220af33</span>))); <span class="comment">// mulhsu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220bf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhu</span>(<span class="ident">RType</span>(<span class="number">0x0220bf33</span>))); <span class="comment">// mulhu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220bf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhu</span>(<span class="ident">RType</span>(<span class="number">0x0220bf33</span>))); <span class="comment">// mulhu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220bf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulhu</span>(<span class="ident">RType</span>(<span class="number">0x0220bf33</span>))); <span class="comment">// mulhu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Div</span>(<span class="ident">RType</span>(<span class="number">0x0220cf33</span>))); <span class="comment">// div x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Div</span>(<span class="ident">RType</span>(<span class="number">0x0220cf33</span>))); <span class="comment">// div x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf33</span>).<span class="ident">unwrap</span>(), <span class="ident">Div</span>(<span class="ident">RType</span>(<span class="number">0x0220cf33</span>))); <span class="comment">// div x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Divu</span>(<span class="ident">RType</span>(<span class="number">0x0220df33</span>))); <span class="comment">// divu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Divu</span>(<span class="ident">RType</span>(<span class="number">0x0220df33</span>))); <span class="comment">// divu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df33</span>).<span class="ident">unwrap</span>(), <span class="ident">Divu</span>(<span class="ident">RType</span>(<span class="number">0x0220df33</span>))); <span class="comment">// divu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef33</span>).<span class="ident">unwrap</span>(), <span class="ident">Rem</span>(<span class="ident">RType</span>(<span class="number">0x0220ef33</span>))); <span class="comment">// rem x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef33</span>).<span class="ident">unwrap</span>(), <span class="ident">Rem</span>(<span class="ident">RType</span>(<span class="number">0x0220ef33</span>))); <span class="comment">// rem x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef33</span>).<span class="ident">unwrap</span>(), <span class="ident">Rem</span>(<span class="ident">RType</span>(<span class="number">0x0220ef33</span>))); <span class="comment">// rem x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff33</span>).<span class="ident">unwrap</span>(), <span class="ident">Remu</span>(<span class="ident">RType</span>(<span class="number">0x0220ff33</span>))); <span class="comment">// remu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff33</span>).<span class="ident">unwrap</span>(), <span class="ident">Remu</span>(<span class="ident">RType</span>(<span class="number">0x0220ff33</span>))); <span class="comment">// remu x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff33</span>).<span class="ident">unwrap</span>(), <span class="ident">Remu</span>(<span class="ident">RType</span>(<span class="number">0x0220ff33</span>))); <span class="comment">// remu x30,x1,x2</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">op32</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c687bb</span>).<span class="ident">unwrap</span>(), <span class="ident">Addw</span>(<span class="ident">RType</span>(<span class="number">0x00c687bb</span>))); <span class="comment">// addw x15,x13,x12</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00c687bb</span>).<span class="ident">unwrap</span>(), <span class="ident">Addw</span>(<span class="ident">RType</span>(<span class="number">0x00c687bb</span>))); <span class="comment">// addw x15,x13,x12</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00208f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Addw</span>(<span class="ident">RType</span>(<span class="number">0x00208f3b</span>))); <span class="comment">// addw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e5053b</span>).<span class="ident">unwrap</span>(), <span class="ident">Subw</span>(<span class="ident">RType</span>(<span class="number">0x40e5053b</span>))); <span class="comment">// subw x10,x10,x14</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e5053b</span>).<span class="ident">unwrap</span>(), <span class="ident">Subw</span>(<span class="ident">RType</span>(<span class="number">0x40e5053b</span>))); <span class="comment">// subw x10,x10,x14</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x40e5053b</span>).<span class="ident">unwrap</span>(), <span class="ident">Subw</span>(<span class="ident">RType</span>(<span class="number">0x40e5053b</span>))); <span class="comment">// subw x10,x10,x14</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x001090bb</span>).<span class="ident">unwrap</span>(), <span class="ident">Sllw</span>(<span class="ident">RType</span>(<span class="number">0x001090bb</span>))); <span class="comment">// sllw x1,x1,x1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00209f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sllw</span>(<span class="ident">RType</span>(<span class="number">0x00209f3b</span>))); <span class="comment">// sllw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00209f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sllw</span>(<span class="ident">RType</span>(<span class="number">0x00209f3b</span>))); <span class="comment">// sllw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srlw</span>(<span class="ident">RType</span>(<span class="number">0x0020df3b</span>))); <span class="comment">// srlw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srlw</span>(<span class="ident">RType</span>(<span class="number">0x0020df3b</span>))); <span class="comment">// srlw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020d13b</span>).<span class="ident">unwrap</span>(), <span class="ident">Srlw</span>(<span class="ident">RType</span>(<span class="number">0x0020d13b</span>))); <span class="comment">// srlw x2,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4020df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraw</span>(<span class="ident">RType</span>(<span class="number">0x4020df3b</span>))); <span class="comment">// sraw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4020df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraw</span>(<span class="ident">RType</span>(<span class="number">0x4020df3b</span>))); <span class="comment">// sraw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x4020df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Sraw</span>(<span class="ident">RType</span>(<span class="number">0x4020df3b</span>))); <span class="comment">// sraw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02208f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulw</span>(<span class="ident">RType</span>(<span class="number">0x02208f3b</span>))); <span class="comment">// mulw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02208f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulw</span>(<span class="ident">RType</span>(<span class="number">0x02208f3b</span>))); <span class="comment">// mulw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x02208f3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Mulw</span>(<span class="ident">RType</span>(<span class="number">0x02208f3b</span>))); <span class="comment">// mulw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divw</span>(<span class="ident">RType</span>(<span class="number">0x0220cf3b</span>))); <span class="comment">// divw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divw</span>(<span class="ident">RType</span>(<span class="number">0x0220cf3b</span>))); <span class="comment">// divw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220cf3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divw</span>(<span class="ident">RType</span>(<span class="number">0x0220cf3b</span>))); <span class="comment">// divw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divuw</span>(<span class="ident">RType</span>(<span class="number">0x0220df3b</span>))); <span class="comment">// divuw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divuw</span>(<span class="ident">RType</span>(<span class="number">0x0220df3b</span>))); <span class="comment">// divuw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220df3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Divuw</span>(<span class="ident">RType</span>(<span class="number">0x0220df3b</span>))); <span class="comment">// divuw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remw</span>(<span class="ident">RType</span>(<span class="number">0x0220ef3b</span>))); <span class="comment">// remw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remw</span>(<span class="ident">RType</span>(<span class="number">0x0220ef3b</span>))); <span class="comment">// remw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ef3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remw</span>(<span class="ident">RType</span>(<span class="number">0x0220ef3b</span>))); <span class="comment">// remw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remuw</span>(<span class="ident">RType</span>(<span class="number">0x0220ff3b</span>))); <span class="comment">// remuw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remuw</span>(<span class="ident">RType</span>(<span class="number">0x0220ff3b</span>))); <span class="comment">// remuw x30,x1,x2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0220ff3b</span>).<span class="ident">unwrap</span>(), <span class="ident">Remuw</span>(<span class="ident">RType</span>(<span class="number">0x0220ff3b</span>))); <span class="comment">// remuw x30,x1,x2</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">branch</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10e78463</span>).<span class="ident">unwrap</span>(), <span class="ident">Beq</span>(<span class="ident">BType</span>(<span class="number">0x10e78463</span>))); <span class="comment">// beq x15,x14,800024b8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00050a63</span>).<span class="ident">unwrap</span>(), <span class="ident">Beq</span>(<span class="ident">BType</span>(<span class="number">0x00050a63</span>))); <span class="comment">// beq x10,x0,80002538</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1b5a0463</span>).<span class="ident">unwrap</span>(), <span class="ident">Beq</span>(<span class="ident">BType</span>(<span class="number">0x1b5a0463</span>))); <span class="comment">// beq x20,x21,80002a10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfe5210e3</span>).<span class="ident">unwrap</span>(), <span class="ident">Bne</span>(<span class="ident">BType</span>(<span class="number">0xfe5210e3</span>))); <span class="comment">// bne x4,x5,800001f4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00e79a63</span>).<span class="ident">unwrap</span>(), <span class="ident">Bne</span>(<span class="ident">BType</span>(<span class="number">0x00e79a63</span>))); <span class="comment">// bne x15,x14,80002184</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x25df1863</span>).<span class="ident">unwrap</span>(), <span class="ident">Bne</span>(<span class="ident">BType</span>(<span class="number">0x25df1863</span>))); <span class="comment">// bne x30,x29,80002f90</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1220c063</span>).<span class="ident">unwrap</span>(), <span class="ident">Blt</span>(<span class="ident">BType</span>(<span class="number">0x1220c063</span>))); <span class="comment">// blt x1,x2,800003c4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00054863</span>).<span class="ident">unwrap</span>(), <span class="ident">Blt</span>(<span class="ident">BType</span>(<span class="number">0x00054863</span>))); <span class="comment">// blt x10,x0,800000c4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfe20cee3</span>).<span class="ident">unwrap</span>(), <span class="ident">Blt</span>(<span class="ident">BType</span>(<span class="number">0xfe20cee3</span>))); <span class="comment">// blt x1,x2,80000158</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x000f5463</span>).<span class="ident">unwrap</span>(), <span class="ident">Bge</span>(<span class="ident">BType</span>(<span class="number">0x000f5463</span>))); <span class="comment">// bge x30,x0,8000003c</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020d663</span>).<span class="ident">unwrap</span>(), <span class="ident">Bge</span>(<span class="ident">BType</span>(<span class="number">0x0020d663</span>))); <span class="comment">// bge x1,x2,80002b88</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0620d463</span>).<span class="ident">unwrap</span>(), <span class="ident">Bge</span>(<span class="ident">BType</span>(<span class="number">0x0620d463</span>))); <span class="comment">// bge x1,x2,80002f04</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfec7ece3</span>).<span class="ident">unwrap</span>(), <span class="ident">Bltu</span>(<span class="ident">BType</span>(<span class="number">0xfec7ece3</span>))); <span class="comment">// bltu x15,x12,800020a8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfec7ece3</span>).<span class="ident">unwrap</span>(), <span class="ident">Bltu</span>(<span class="ident">BType</span>(<span class="number">0xfec7ece3</span>))); <span class="comment">// bltu x15,x12,800020a8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0020e663</span>).<span class="ident">unwrap</span>(), <span class="ident">Bltu</span>(<span class="ident">BType</span>(<span class="number">0x0020e663</span>))); <span class="comment">// bltu x1,x2,80002b18</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f5f463</span>).<span class="ident">unwrap</span>(), <span class="ident">Bgeu</span>(<span class="ident">BType</span>(<span class="number">0x00f5f463</span>))); <span class="comment">// bgeu x11,x15,80002290</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f5f463</span>).<span class="ident">unwrap</span>(), <span class="ident">Bgeu</span>(<span class="ident">BType</span>(<span class="number">0x00f5f463</span>))); <span class="comment">// bgeu x11,x15,80002290</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xfec572e3</span>).<span class="ident">unwrap</span>(), <span class="ident">Bgeu</span>(<span class="ident">BType</span>(<span class="number">0xfec572e3</span>))); <span class="comment">// bgeu x10,x12,80002084</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">system</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00000073</span>).<span class="ident">unwrap</span>(), <span class="ident">Ecall</span>); <span class="comment">// ecall</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10200073</span>).<span class="ident">unwrap</span>(), <span class="ident">Sret</span>); <span class="comment">// sret</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x30200073</span>).<span class="ident">unwrap</span>(), <span class="ident">Mret</span>); <span class="comment">// mret</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10500073</span>).<span class="ident">unwrap</span>(), <span class="ident">Wfi</span>); <span class="comment">// wfi</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10569073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrw</span>(<span class="ident">CsrType</span>(<span class="number">0x10569073</span>))); <span class="comment">// csrrw x0,stvec,x13</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x18079073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrw</span>(<span class="ident">CsrType</span>(<span class="number">0x18079073</span>))); <span class="comment">// csrrw x0,satp,x15</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10551073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrw</span>(<span class="ident">CsrType</span>(<span class="number">0x10551073</span>))); <span class="comment">// csrrw x0,stvec,x10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1007a073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrs</span>(<span class="ident">CsrType</span>(<span class="number">0x1007a073</span>))); <span class="comment">// csrrs x0,sstatus,x15</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1006a073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrs</span>(<span class="ident">CsrType</span>(<span class="number">0x1006a073</span>))); <span class="comment">// csrrs x0,sstatus,x13</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1004b073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrc</span>(<span class="ident">CsrType</span>(<span class="number">0x1004b073</span>))); <span class="comment">// csrrc x0,sstatus,x9</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x100db073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrc</span>(<span class="ident">CsrType</span>(<span class="number">0x100db073</span>))); <span class="comment">// csrrc x0,sstatus,x27</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1006b073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrc</span>(<span class="ident">CsrType</span>(<span class="number">0x1006b073</span>))); <span class="comment">// csrrc x0,sstatus,x13</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x14005073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrwi</span>(<span class="ident">CsrIType</span>(<span class="number">0x14005073</span>))); <span class="comment">// csrrwi x0,sscratch,0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10016073</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrsi</span>(<span class="ident">CsrIType</span>(<span class="number">0x10016073</span>))); <span class="comment">// csrrsi x0,sstatus,2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x100176f3</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrci</span>(<span class="ident">CsrIType</span>(<span class="number">0x100176f3</span>))); <span class="comment">// csrrci x13,sstatus,2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10017773</span>).<span class="ident">unwrap</span>(), <span class="ident">Csrrci</span>(<span class="ident">CsrIType</span>(<span class="number">0x10017773</span>))); <span class="comment">// csrrci x14,sstatus,2</span>
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">float</span>() {
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0004a787</span>).<span class="ident">unwrap</span>(), <span class="ident">Flw</span>(<span class="ident">IType</span>(<span class="number">0x0004a787</span>))); <span class="comment">// flw fa5,0(s1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1e872687</span>).<span class="ident">unwrap</span>(), <span class="ident">Flw</span>(<span class="ident">IType</span>(<span class="number">0x1e872687</span>))); <span class="comment">// flw fa3,488(a4)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1e472707</span>).<span class="ident">unwrap</span>(), <span class="ident">Flw</span>(<span class="ident">IType</span>(<span class="number">0x1e472707</span>))); <span class="comment">// flw fa4,484(a4)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00aa2027</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsw</span>(<span class="ident">SType</span>(<span class="number">0x00aa2027</span>))); <span class="comment">// fsw fa0,0(s4)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00f4a027</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsw</span>(<span class="ident">SType</span>(<span class="number">0x00f4a027</span>))); <span class="comment">// fsw fa5,0(s1)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x00fba827</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsw</span>(<span class="ident">SType</span>(<span class="number">0x00fba827</span>))); <span class="comment">// fsw fa5,16(s7)</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd19b1543</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmadds</span>(<span class="ident">R4Type</span>(<span class="number">0xd19b1543</span>))); <span class="comment">// fmadd.s fa0,fs6,fs9,fs10,rtz</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x114f8bc3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmadds</span>(<span class="ident">R4Type</span>(<span class="number">0x114f8bc3</span>))); <span class="comment">// fmadd.s fs7,ft11,fs4,ft2,rne</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x08cf53c3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmadds</span>(<span class="ident">R4Type</span>(<span class="number">0x08cf53c3</span>))); <span class="comment">// fmadd.s ft7,ft10,fa2,ft1,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x3166dd47</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0x3166dd47</span>))); <span class="comment">// fmsub.s fs10,fa3,fs6,ft6,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x50077347</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0x50077347</span>))); <span class="comment">// fmsub.s ft6,fa4,ft0,fa0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xb903e1c7</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0xb903e1c7</span>))); <span class="comment">// fmsub.s ft3,ft7,fa6,fs7,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc9cd48cb</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0xc9cd48cb</span>))); <span class="comment">// fnmsub.s fa7,fs10,ft8,fs9,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa1ee44cb</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0xa1ee44cb</span>))); <span class="comment">// fnmsub.s fs1,ft8,ft10,fs4,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xf8db734b</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmsubs</span>(<span class="ident">R4Type</span>(<span class="number">0xf8db734b</span>))); <span class="comment">// fnmsub.s ft6,fs6,fa3,ft11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x19613e4f</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmadds</span>(<span class="ident">R4Type</span>(<span class="number">0x19613e4f</span>))); <span class="comment">// fnmadd.s ft8,ft2,fs6,ft3,rup</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc944cfcf</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmadds</span>(<span class="ident">R4Type</span>(<span class="number">0xc944cfcf</span>))); <span class="comment">// fnmadd.s ft11,fs1,fs4,fs9,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x191506cf</span>).<span class="ident">unwrap</span>(), <span class="ident">Fnmadds</span>(<span class="ident">R4Type</span>(<span class="number">0x191506cf</span>))); <span class="comment">// fnmadd.s fa3,fa0,fa7,ft3,rne</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0127f553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fadds</span>(<span class="ident">RType</span>(<span class="number">0x0127f553</span>))); <span class="comment">// fadd.s fa0,fa5,fs2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x01257553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fadds</span>(<span class="ident">RType</span>(<span class="number">0x01257553</span>))); <span class="comment">// fadd.s fa0,fa0,fs2</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0135f9d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fadds</span>(<span class="ident">RType</span>(<span class="number">0x0135f9d3</span>))); <span class="comment">// fadd.s fs3,fa1,fs3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0897f7d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsubs</span>(<span class="ident">RType</span>(<span class="number">0x0897f7d3</span>))); <span class="comment">// fsub.s fa5,fa5,fs1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0957f7d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsubs</span>(<span class="ident">RType</span>(<span class="number">0x0957f7d3</span>))); <span class="comment">// fsub.s fa5,fa5,fs5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x0935f753</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsubs</span>(<span class="ident">RType</span>(<span class="number">0x0935f753</span>))); <span class="comment">// fsub.s fa4,fa1,fs3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x10f97953</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmuls</span>(<span class="ident">RType</span>(<span class="number">0x10f97953</span>))); <span class="comment">// fmul.s fs2,fs2,fa5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1187f7d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmuls</span>(<span class="ident">RType</span>(<span class="number">0x1187f7d3</span>))); <span class="comment">// fmul.s fa5,fa5,fs8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x116b7553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmuls</span>(<span class="ident">RType</span>(<span class="number">0x116b7553</span>))); <span class="comment">// fmul.s fa0,fs6,fs6</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x1947f553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fdivs</span>(<span class="ident">RType</span>(<span class="number">0x1947f553</span>))); <span class="comment">// fdiv.s fa0,fa5,fs4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x18a7f553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fdivs</span>(<span class="ident">RType</span>(<span class="number">0x18a7f553</span>))); <span class="comment">// fdiv.s fa0,fa5,fa0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x18f777d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fdivs</span>(<span class="ident">RType</span>(<span class="number">0x18f777d3</span>))); <span class="comment">// fdiv.s fa5,fa4,fa5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x58057553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsqrts</span>(<span class="ident">RType</span>(<span class="number">0x58057553</span>))); <span class="comment">// fsqrt.s fa0,fa0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x580e35d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsqrts</span>(<span class="ident">RType</span>(<span class="number">0x580e35d3</span>))); <span class="comment">// fsqrt.s fa1,ft8,rup</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x5808c0d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsqrts</span>(<span class="ident">RType</span>(<span class="number">0x5808c0d3</span>))); <span class="comment">// fsqrt.s ft1,fa7,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x21ca0ed3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjs</span>(<span class="ident">RType</span>(<span class="number">0x21ca0ed3</span>))); <span class="comment">// fsgnj.s ft9,fs4,ft8</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x20d103d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjs</span>(<span class="ident">RType</span>(<span class="number">0x20d103d3</span>))); <span class="comment">// fsgnj.s ft7,ft2,fa3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x209c0d53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjs</span>(<span class="ident">RType</span>(<span class="number">0x209c0d53</span>))); <span class="comment">// fsgnj.s fs10,fs8,fs1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x21dd1b53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjns</span>(<span class="ident">RType</span>(<span class="number">0x21dd1b53</span>))); <span class="comment">// fsgnjn.s fs6,fs10,ft9</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x20971153</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjns</span>(<span class="ident">RType</span>(<span class="number">0x20971153</span>))); <span class="comment">// fsgnjn.s ft2,fa4,fs1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x211d1953</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjns</span>(<span class="ident">RType</span>(<span class="number">0x211d1953</span>))); <span class="comment">// fsgnjn.s fs2,fs10,fa7</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x20eb2153</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjxs</span>(<span class="ident">RType</span>(<span class="number">0x20eb2153</span>))); <span class="comment">// fsgnjx.s ft2,fs6,fa4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x219fa7d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjxs</span>(<span class="ident">RType</span>(<span class="number">0x219fa7d3</span>))); <span class="comment">// fsgnjx.s fa5,ft11,fs9</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x215baad3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fsgnjxs</span>(<span class="ident">RType</span>(<span class="number">0x215baad3</span>))); <span class="comment">// fsgnjx.s fs5,fs7,fs5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x286b82d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmins</span>(<span class="ident">RType</span>(<span class="number">0x286b82d3</span>))); <span class="comment">// fmin.s ft5,fs7,ft6</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x29ac88d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmins</span>(<span class="ident">RType</span>(<span class="number">0x29ac88d3</span>))); <span class="comment">// fmin.s fa7,fs9,fs10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x29728c53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmins</span>(<span class="ident">RType</span>(<span class="number">0x29728c53</span>))); <span class="comment">// fmin.s fs8,ft5,fs7</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x29441153</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmaxs</span>(<span class="ident">RType</span>(<span class="number">0x29441153</span>))); <span class="comment">// fmax.s ft2,fs0,fs4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x29689fd3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmaxs</span>(<span class="ident">RType</span>(<span class="number">0x29689fd3</span>))); <span class="comment">// fmax.s ft11,fa7,fs6</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0x286a1fd3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmaxs</span>(<span class="ident">RType</span>(<span class="number">0x286a1fd3</span>))); <span class="comment">// fmax.s ft11,fs4,ft6</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc0056553</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtws</span>(<span class="ident">RType</span>(<span class="number">0xc0056553</span>))); <span class="comment">// fcvt.w.s a0,fa0,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc006fad3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtws</span>(<span class="ident">RType</span>(<span class="number">0xc006fad3</span>))); <span class="comment">// fcvt.w.s s5,fa3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc00fa8d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtws</span>(<span class="ident">RType</span>(<span class="number">0xc00fa8d3</span>))); <span class="comment">// fcvt.w.s a7,ft11,rdn</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc014cb53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtwus</span>(<span class="ident">RType</span>(<span class="number">0xc014cb53</span>))); <span class="comment">// fcvt.wu.s s6,fs1,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc01698d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtwus</span>(<span class="ident">RType</span>(<span class="number">0xc01698d3</span>))); <span class="comment">// fcvt.wu.s a7,fa3,rtz</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xc01e5dd3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtwus</span>(<span class="ident">RType</span>(<span class="number">0xc01e5dd3</span>))); <span class="comment">// fcvt.wu.s s11,ft8,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe00482d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvxw</span>(<span class="ident">RType</span>(<span class="number">0xe00482d3</span>))); <span class="comment">// fmv.x.w t0,fs1</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe00d86d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvxw</span>(<span class="ident">RType</span>(<span class="number">0xe00d86d3</span>))); <span class="comment">// fmv.x.w a3,fs11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe0088053</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvxw</span>(<span class="ident">RType</span>(<span class="number">0xe0088053</span>))); <span class="comment">// fmv.x.w zero,fa7</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa0742153</span>).<span class="ident">unwrap</span>(), <span class="ident">Feqs</span>(<span class="ident">RType</span>(<span class="number">0xa0742153</span>))); <span class="comment">// feq.s sp,fs0,ft7</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa0a0a153</span>).<span class="ident">unwrap</span>(), <span class="ident">Feqs</span>(<span class="ident">RType</span>(<span class="number">0xa0a0a153</span>))); <span class="comment">// feq.s sp,ft1,fa0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa1aba853</span>).<span class="ident">unwrap</span>(), <span class="ident">Feqs</span>(<span class="ident">RType</span>(<span class="number">0xa1aba853</span>))); <span class="comment">// feq.s a6,fs7,fs10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa0651953</span>).<span class="ident">unwrap</span>(), <span class="ident">Flts</span>(<span class="ident">RType</span>(<span class="number">0xa0651953</span>))); <span class="comment">// flt.s s2,fa0,ft6</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa0ab9f53</span>).<span class="ident">unwrap</span>(), <span class="ident">Flts</span>(<span class="ident">RType</span>(<span class="number">0xa0ab9f53</span>))); <span class="comment">// flt.s t5,fs7,fa0</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa19595d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Flts</span>(<span class="ident">RType</span>(<span class="number">0xa19595d3</span>))); <span class="comment">// flt.s a1,fa1,fs9</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa1ff8d53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fles</span>(<span class="ident">RType</span>(<span class="number">0xa1ff8d53</span>))); <span class="comment">// fle.s s10,ft11,ft11</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa0f40653</span>).<span class="ident">unwrap</span>(), <span class="ident">Fles</span>(<span class="ident">RType</span>(<span class="number">0xa0f40653</span>))); <span class="comment">// fle.s a2,fs0,fa5</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xa1ab0c53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fles</span>(<span class="ident">RType</span>(<span class="number">0xa1ab0c53</span>))); <span class="comment">// fle.s s8,fs6,fs10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe00a1e53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fclasss</span>(<span class="ident">RType</span>(<span class="number">0xe00a1e53</span>))); <span class="comment">// fclass.s t3,fs4</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe00f1c53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fclasss</span>(<span class="ident">RType</span>(<span class="number">0xe00f1c53</span>))); <span class="comment">// fclass.s s8,ft10</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xe00e9d53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fclasss</span>(<span class="ident">RType</span>(<span class="number">0xe00e9d53</span>))); <span class="comment">// fclass.s s10,ft9</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd009d7d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtsw</span>(<span class="ident">RType</span>(<span class="number">0xd009d7d3</span>))); <span class="comment">// fcvt.s.w fa5,s3,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd001a953</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtsw</span>(<span class="ident">RType</span>(<span class="number">0xd001a953</span>))); <span class="comment">// fcvt.s.w fs2,gp,rdn</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd00507d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtsw</span>(<span class="ident">RType</span>(<span class="number">0xd00507d3</span>))); <span class="comment">// fcvt.s.w fa5,a0,rne</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd01c27d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtswu</span>(<span class="ident">RType</span>(<span class="number">0xd01c27d3</span>))); <span class="comment">// fcvt.s.wu fa5,s8,rdn</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd019edd3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtswu</span>(<span class="ident">RType</span>(<span class="number">0xd019edd3</span>))); <span class="comment">// fcvt.s.wu fs11,s3,unknown</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xd012c3d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fcvtswu</span>(<span class="ident">RType</span>(<span class="number">0xd012c3d3</span>))); <span class="comment">// fcvt.s.wu ft7,t0,rmm</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xf0000e53</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvwx</span>(<span class="ident">RType</span>(<span class="number">0xf0000e53</span>))); <span class="comment">// fmv.w.x ft8,zero</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xf0098053</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvwx</span>(<span class="ident">RType</span>(<span class="number">0xf0098053</span>))); <span class="comment">// fmv.w.x ft0,s3</span>
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">decode</span>(<span class="number">0xf00081d3</span>).<span class="ident">unwrap</span>(), <span class="ident">Fmvwx</span>(<span class="ident">RType</span>(<span class="number">0xf00081d3</span>))); <span class="comment">// fmv.w.x ft3,ra</span>
+    }
+}
+</pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "riscv_decode";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

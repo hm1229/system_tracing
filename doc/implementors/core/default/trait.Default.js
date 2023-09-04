@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["spin"] = [{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for Mutex&lt;T&gt;","synthetic":false,"types":[]},{"text":"impl&lt;T:&nbsp;?Sized + Default&gt; Default for RwLock&lt;T&gt;","synthetic":false,"types":[]}];
+implementors["trapframe"] = [{"text":"impl Default for TrapFrame","synthetic":false,"types":[]},{"text":"impl Default for UserContext","synthetic":false,"types":[]},{"text":"impl Default for GeneralRegs","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
