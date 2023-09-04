@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `uprobes_kernel_function_initialization` fn in crate `system_tracing`."><meta name="keywords" content="rust, rustlang, rust-lang, uprobes_kernel_function_initialization"><title>system_tracing::uprobes_kernel_function_initialization - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc fn"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../system_tracing/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><div class="sidebar-elems"><p class='location'><a href='index.html'>system_tracing</a></p><script>window.sidebarCurrent = {name: 'uprobes_kernel_function_initialization', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/system_tracing/uprobes.rs.html#469-474' title='goto source code'>[src]</a></span><span class='in-band'>Function <a href='index.html'>system_tracing</a>::<wbr><a class="fn" href=''>uprobes_kernel_function_initialization</a></span></h1><pre class='rust fn'>pub fn uprobes_kernel_function_initialization(<br>&nbsp;&nbsp;&nbsp;&nbsp;get_exec_path: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;<a class="struct" href="../spin/mutex/struct.Mutex.html" title="struct spin::mutex::Mutex">Mutex</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnMut.html" title="trait core::ops::function::FnMut">FnMut</a>() -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a> + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a>&gt;&gt;, <br>&nbsp;&nbsp;&nbsp;&nbsp;get_new_page: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/sync/struct.Arc.html" title="struct alloc::sync::Arc">Arc</a>&lt;<a class="struct" href="../spin/mutex/struct.Mutex.html" title="struct spin::mutex::Mutex">Mutex</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnMut.html" title="trait core::ops::function::FnMut">FnMut</a>(usize, usize) -&gt; usize + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a>&gt;&gt;<br>)</pre><div class='docblock'><h1 id="uprobes-kernel-function-initialization" class="section-header"><a href="#uprobes-kernel-function-initialization">Uprobes Kernel Function Initialization</a></h1>
+<p>If you want to use Uprobes, you need to first initialize a <code>add_new_page</code> function
+and a 'get_exec_path' function through the init function, before user mode starts.</p>
+<p>Function feature requirements：</p>
+<ul>
+<li>
+<p>add new page</p>
+<p>Given an address and a required length, the function creates a blank page closest to the
+address and returns the address of the blank page.</p>
+</li>
+<li>
+<p>get execution path</p>
+<p>Get the path of the currently running user-mode program.</p>
+</li>
+</ul>
+<h1 id="example" class="section-header"><a href="#example">Example</a></h1>
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">fn</span> <span class="ident">get_exec_path</span>() <span class="op">-&gt;</span> <span class="ident">String</span>{
+    <span class="ident">current_thread</span>().<span class="ident">unwrap</span>().<span class="ident">proc</span>.<span class="ident">try_lock</span>().<span class="ident">expect</span>(<span class="string">&quot;locked!&quot;</span>).<span class="ident">exec_path</span>.<span class="ident">clone</span>()
+}
+
+<span class="kw">fn</span> <span class="ident">get_new_page</span>(<span class="ident">addr</span>: <span class="ident">usize</span>, <span class="ident">len</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">usize</span>{
+    <span class="kw">let</span> <span class="ident">thread</span> <span class="op">=</span> <span class="ident">current_thread</span>().<span class="ident">unwrap</span>();
+    <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">vm</span> <span class="op">=</span> <span class="ident">thread</span>.<span class="ident">vm</span>.<span class="ident">lock</span>();
+    <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="ident">vm</span>.<span class="ident">find_free_area</span>(<span class="ident">addr</span>, <span class="ident">len</span>);
+    <span class="ident">vm</span>.<span class="ident">push</span>(
+        <span class="ident">addr</span>,
+        <span class="ident">addr</span> <span class="op">+</span> <span class="ident">len</span>,
+        <span class="ident">MemoryAttr</span>::<span class="ident">default</span>().<span class="ident">user</span>().<span class="ident">execute</span>().<span class="ident">writable</span>(),
+        <span class="ident">ByFrame</span>::<span class="ident">new</span>(<span class="ident">GlobalFrameAlloc</span>),
+        <span class="string">&quot;point&quot;</span>,
+    );
+    <span class="kw">unsafe</span> {<span class="macro">asm</span><span class="macro">!</span>(<span class="string">&quot;fence.i&quot;</span>);}
+    <span class="ident">addr</span>
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">init</span>(){
+    <span class="ident">system_tracing</span>::<span class="ident">uprobes_kernel_function_initialization</span>(
+        <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="op">||</span> <span class="ident">get_exec_path</span>())),
+        <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">addr</span>: <span class="ident">usize</span>, <span class="ident">len</span>: <span class="ident">usize</span><span class="op">|</span> <span class="ident">get_new_page</span>(<span class="ident">addr</span>, <span class="ident">len</span>)))
+    )
+}</pre></div>
+</div></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "system_tracing";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

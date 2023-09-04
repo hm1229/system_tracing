@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["DecodingError",""],["Instruction",""]],"fn":[["decode","Decode the given instruction."],["instruction_length","Return the length (in bytes) of an instruction given the low 16 bits of it."]],"mod":[["types",""]]});
